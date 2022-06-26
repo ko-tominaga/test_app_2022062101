@@ -1,8 +1,8 @@
 
-/// バリエーションの定義をもつクラス。
+/// バリデーションの定義をもつクラス。
 class ValidateText {
 
-  // パスワードのバリエーション
+  // パスワードのバリデーション
   static String? password(String? value) {
     if (value != null) {
       String pattern = r'^[a-zA-Z0-9]{6,10}$';
