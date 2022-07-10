@@ -22,7 +22,7 @@ Flutterの勉強で作成したパスワード管理アプリです。
 
 ### 画面キャプチャ
 ***
-※読み込みまで10程度時間がかかります。  
+※読み込みまで10秒程度時間がかかります。  
 
 ![リンク名](https://github.com/ko-tominaga/test_app_2022062101/blob/main/PwList.gif)
 
