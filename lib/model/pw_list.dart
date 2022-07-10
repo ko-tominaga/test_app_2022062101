@@ -1,7 +1,9 @@
+import 'package:intl/intl.dart';
+
 /// PwListモデルのクラス
 class PwList {
   /// ID
-  late int id;
+  int? id;
 
   /// タイトル
   late String title;
@@ -32,10 +34,29 @@ class PwList {
       this.updateDate,
       );
 
-  /// Mapに変換する(保存時に使用)
-  /// Mapは辞書型
-  Map toJson() {
-    return {
+  /// コンストラクタ、Mapから初期化する。
+  PwList.fromMap(Map map){
+    id = map['id'];
+    title = map['title'];
+    userID = map['userID'];
+    password = map['password'];
+    memo = map['memo'];
+    createDate = map['createDate'];
+    updateDate = map['updateDate'];
+  }
+
+  PwList.createNew(){
+    id;
+    title = '';
+    userID = '';
+    password = '';
+    memo = '';
+    createDate = getDateTime();
+    updateDate = '';
+  }
+
+  /// Mapに変換する
+  Map<String, dynamic> toMap() => {
       'id': id,
       'title': title,
       'userID': userID,
@@ -43,17 +64,13 @@ class PwList {
       'memo': memo,
       'createDate': createDate,
       'updateDate': updateDate
-    };
+  };
+
+  /// "yyyy/MM/dd HH:mm"形式で日時を取得する
+  String getDateTime() {
+    var format = DateFormat("yyyy/MM/dd HH:mm");
+    var dateTime = format.format(DateTime.now());
+    return dateTime;
   }
 
-  /// MapをPwListモデルに変換する(読込時に使用)
-  PwList.fromJson(Map json) {
-    id = json['id'];
-    title = json['title'];
-    userID = json['userID'];
-    password = json['password'];
-    memo = json['memo'];
-    createDate = json['createDate'];
-    updateDate = json['updateDate'];
-  }
 }

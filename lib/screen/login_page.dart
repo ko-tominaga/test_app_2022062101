@@ -1,38 +1,38 @@
-///起動時に開く画面。
-///パスワード認証を行う。
 import 'package:flutter/material.dart';
 import 'package:test_app_2022062101/screen/pw_list_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../components/validation.dart';
 
 class LoginPage extends StatefulWidget {
 
-  /// ログインパスワード。
+  /// ログインパスワード
   final String? password;
 
-  /// コンストラクタ
-  /// ログインパスワードを設定する。
+  /// コンストラクタでログインパスワードを設定する。
   const LoginPage(this.password);
 
   @override
   _LoginPage createState() => _LoginPage();
 }
 
-/// 起動時に呼び出される画面のクラス。
+/// 起動時に呼び出される画面のクラス
 ///
 /// 初めての起動：ログインパスワード入力画面に遷移。
 /// 初めての起動意外：ログイン画面に遷移。
-class _LoginPage extends State<LoginPage> {
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+class _LoginPage extends State<LoginPage> with WidgetsBindingObserver {
 
-  /// ユーザが入力したパスワード。
+  /// テキストフィールドパスワードのキー
+  final _formKey = GlobalKey<FormState>();
+
+  /// ユーザが入力したパスワード
   late String? _inputPw;
 
-  /// ログインボタンの活性、非活性を管理する。
+  /// 登録されているパスワード
+  late String? _nowPw;
+
+  /// ログインボタンの活性、非活性を管理する
   /// True：非活性　False：活性
   late bool _isDisabled = false;
-
-  /// 登録されているパスワード。
-  late String? _nowPw;
 
   @override
   void initState() {
@@ -40,12 +40,13 @@ class _LoginPage extends State<LoginPage> {
     _nowPw = widget.password;
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: Text('ログイン画面'),
+        title: const Text('ログイン画面'),
       ),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -54,15 +55,20 @@ class _LoginPage extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              TextField(
-                obscureText: true,
-                decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'パスワードを入力してください'
+              Form(
+                key: _formKey,
+                child: TextFormField(
+                  obscureText: true,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: ValidateText.password,
+                  decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'パスワードを入力してください'
+                  ),
+                  onChanged: (value){
+                    _inputPw = value;
+                  },
                 ),
-                onChanged: (value){
-                  _inputPw = value;
-                },
               ),
               OutlinedButton(
                 child: const Text('ログイン'),
@@ -74,31 +80,7 @@ class _LoginPage extends State<LoginPage> {
                   side: const BorderSide(),
                 ),
                 onPressed: _isDisabled ? null : () async {
-                  // キーボードのフォーカスを外す。
-                  FocusScope.of(context).unfocus();
-                  // 警告（showSnackBar）が滞留しないように登録ボタンを無効にする。
-                  setState(() => _isDisabled = true);
-                  // 入力されたパスワードが正しいか比較する。
-                  if ( _inputPw == _nowPw){
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        settings: const RouteSettings(name: "/home"),
-                        builder: (BuildContext context) => PwListPage(),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('パスワードが違います'),
-                        )
-                    );
-                  }
-                  // 登録ボタンを無効にする時間を設定
-                  await Future.delayed(
-                    const Duration(milliseconds: 3500),
-                  );
-                  // 登録ボタンを有効にする
-                  setState(() => _isDisabled = false);
+                  _PwCheck();
                 },
               ),
             ],
@@ -106,6 +88,41 @@ class _LoginPage extends State<LoginPage> {
         ),
       ),
     );
+  }
+  /// ログインボタンを押下した時のチェック処理
+  _PwCheck() async {
+    //　キーボードを隠す
+    FocusScope.of(context).unfocus();
+    // ボタンを無効
+    setState(() => _isDisabled = true);
+
+    if (!_formKey.currentState!.validate()) { // 入力された値が入力規則を満たしているか確認する。
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('正しい値を入力してください。'),
+          )
+      );
+      // SnackBarが滞留しないように、ボタンを一時的に無効化する
+      await Future.delayed(const Duration(milliseconds: 3500));
+      setState(() => _isDisabled = false);
+    } else if ( _inputPw == _nowPw) {  // 正しい値が入力されている場合
+      // パスワード管理画面に遷移する。
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          settings: const RouteSettings(name: "/home"),
+          builder: (BuildContext context) => PwListPage(),
+        ),
+      );
+    } else {  // 1つ目と2つ目のパスワードが違う場合
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('パスワードが異なります。'),
+          )
+      );
+      // SnackBarが滞留しないように、ボタンを一時的に無効化する
+      await Future.delayed(const Duration(milliseconds: 3500));
+      setState(() => _isDisabled = false);
+    }
   }
 }
 

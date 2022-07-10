@@ -1,29 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:test_app_2022062101/screen/first_login_page.dart';
 import 'package:test_app_2022062101/screen/login_page.dart';
-import 'package:test_app_2022062101/components/login_pw_store.dart';
+import '../components/database_helper.dart';
 
 void main() {
   runApp(MyApp());
 }
 
-
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: ''),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-  final String title;
+  const MyHomePage({Key? key}) : super(key: key);
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
@@ -34,18 +31,19 @@ class MyHomePage extends StatefulWidget {
 /// 初めての起動意外：ログイン画面に遷移。
 class _MyHomePageState extends State<MyHomePage> {
 
-  /// ストアのインスタンス
-  final LoginPwStore _store = LoginPwStore();
+  /// database_helperのインスタンス
+  final _dbHelper = DatabaseHelper();
 
-  /// ユーザが登録しているパスワード。
-  late String pw = '';
+  /// ユーザが登録しているログインパスワード
+  late String? pw;
 
   @override
   void initState() {
     super.initState();
     Future(() async {
-      pw = await _store.getPassword();
-      if( pw == '' ) {
+      pw = await _dbHelper.getPw();
+      // 初回起動か判断する
+      if( pw == null ) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             settings: const RouteSettings(name: "/home"),

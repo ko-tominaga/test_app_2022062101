@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:test_app_2022062101/model/pw_list.dart';
-
-import '../components/pw_list_store.dart';
+import '../components/database_helper.dart';
 
 class PwInsertPage extends StatefulWidget {
 
@@ -9,7 +8,7 @@ class PwInsertPage extends StatefulWidget {
   final PwList? pwList;
 
   /// コンストラクタ
-  /// PwListを引数で受け取った場合は更新、受け取らない場合は追加画面となる
+  /// PwListを受け取る=更新：受け取らない=新規追加画面
   const PwInsertPage({Key? key, this.pwList}) : super(key: key);
 
   /// PW入力画面の状態を生成する
@@ -24,46 +23,29 @@ class PwInsertPage extends StatefulWidget {
 /// ・PWを追加/更新する
 /// ・PWリスト画面へ戻る
 class _PwInsertPage extends State<PwInsertPage> {
-  /// ストア
-  final PwListStore _store = PwListStore();
+
+  /// database_helperのインスタンス
+  final _dbHelper = DatabaseHelper();
 
   /// 新規追加か判断
   /// Trueだと新規追加、Falseだと更新と判断している。
   late bool _isCreatePW;
 
-  /// 画面項目：タイトル
-  late String _title;
-
-  /// 画面項目：ユーザID
-  late String _userID;
-
-  /// 画面項目：パスワード
-  late String _password;
-
-  /// 画面項目：メモ
-  late String _memo;
-
-  /// 画面項目：作成日時
-  late String _createDate;
-
-  /// 画面項目：更新日時
-  late String _updateDate;
+  /// パスワードリストのモデル
+  PwList? _pwList;
 
   /// 初期処理を行う
   @override
   void initState() {
     super.initState();
-    var pwList = widget.pwList;
 
-    _isCreatePW = pwList == null;
-
-    // A ?? B : AがnullじゃなければAを返し、AがnullならBを返す
-    _title = pwList?.title ?? "";
-    _userID = pwList?.userID ?? "";
-    _password = pwList?.password ?? "";
-    _memo = pwList?.memo ?? "";
-    _createDate = pwList?.createDate ?? "";
-    _updateDate = pwList?.updateDate ?? "";
+    if(widget.pwList == null){
+      _pwList = PwList.createNew();
+      _isCreatePW = true;
+    } else {
+      _isCreatePW = false;
+      _pwList = widget.pwList;
+    }
   }
 
   /// 画面を作成する
@@ -101,9 +83,9 @@ class _PwInsertPage extends State<PwInsertPage> {
                   ),
                 ),
                 // TextEditingControllerを使用することで、setStateしなくても画面を更新してくれる
-                controller: TextEditingController(text: _title),
+                controller: TextEditingController(text: _pwList?.title),
                 onChanged: (String value) {
-                  _title = value;
+                  _pwList?.title = value;
                 },
               ),
 
@@ -124,9 +106,9 @@ class _PwInsertPage extends State<PwInsertPage> {
                   ),
                 ),
                 // TextEditingControllerを使用することで、setStateしなくても画面を更新してくれる
-                controller: TextEditingController(text: _userID),
+                controller: TextEditingController(text: _pwList?.userID),
                 onChanged: (String value) {
-                  _userID = value;
+                  _pwList?.userID = value;
                 },
               ),
               const SizedBox(height: 20),
@@ -146,9 +128,9 @@ class _PwInsertPage extends State<PwInsertPage> {
                   ),
                 ),
                 // TextEditingControllerを使用することで、setStateしなくても画面を更新してくれる
-                controller: TextEditingController(text: _password),
+                controller: TextEditingController(text: _pwList?.password),
                 onChanged: (String value) {
-                  _password = value;
+                  _pwList?.password = value;
                 },
               ),
               const SizedBox(height: 20),
@@ -168,9 +150,9 @@ class _PwInsertPage extends State<PwInsertPage> {
                   ),
                 ),
                 // TextEditingControllerを使用することで、setStateしなくても画面を更新してくれる
-                controller: TextEditingController(text: _memo),
+                controller: TextEditingController(text: _pwList?.memo),
                 onChanged: (String value) {
-                  _memo = value;
+                  _pwList?.memo = value;
                 },
               ),
               const SizedBox(height: 20),
@@ -179,12 +161,12 @@ class _PwInsertPage extends State<PwInsertPage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (_isCreatePW) {
-                      // PwListを追加する
-                      _store.add(_title, _userID, _password, _memo);
-                    } else {
-                      // PwListを更新する
-                      _store.update(widget.pwList!, _title, _userID, _password, _memo);
+                    if (_isCreatePW) { // 新規登録の場合
+                      _dbHelper.insert(_pwList!.toMap());
+                    } else { // 更新の場合
+                      // 最終更新日時を更新する。
+                      _pwList!.updateDate = _pwList!.getDateTime();
+                      _dbHelper.update(_pwList!.toMap());
                     }
                     // PwListリスト画面に戻る
                     Navigator.of(context).pop();
@@ -218,9 +200,9 @@ class _PwInsertPage extends State<PwInsertPage> {
               ),
               const SizedBox(height: 30),
               // 作成日時のテキストラベル
-              Text("作成日時 : $_createDate"),
+              Text("作成日時 : ${_pwList?.createDate}"),
               // 更新日時のテキストラベル
-              Text("更新日時 : $_updateDate"),
+              Text("更新日時 : ${_pwList?.updateDate}"),
             ],
           ),
         ),
